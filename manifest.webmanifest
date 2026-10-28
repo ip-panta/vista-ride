@@ -1,0 +1,15 @@
+{
+  "name": "Vista Ride",
+  "short_name": "Vista Ride",
+  "description": "Ride your exercise bike through sunny real-world routes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E7F1F4",
+  "theme_color": "#12324A",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

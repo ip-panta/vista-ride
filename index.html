@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324A">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Vista Ride</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mist:#E7F1F4;
+  --lake:#12324A;
+  --lake-2:#4A6A80;
+  --sun:#FFB21E;
+  --meadow:#2E9C6A;
+  --snow:#FFFFFF;
+  --line:#C9DCE3;
+  --display:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--mist);color:var(--lake);font-family:var(--body);font-size:17px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* ---------- setup screen ---------- */
+#setup{max-width:720px;margin:0 auto;padding:calc(14px + var(--safe-t)) 18px calc(110px + var(--safe-b))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.wordmark{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.2px;margin:0;display:flex;align-items:center;gap:10px}
+.wordmark svg{flex:none}
+.pill{border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;background:var(--snow);border:1px solid var(--line);white-space:nowrap}
+.pill.on{background:var(--meadow);border-color:var(--meadow);color:var(--snow)}
+
+.bike{background:var(--snow);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:26px}
+.bike p{margin:0 0 10px}
+.bike .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:0;border-radius:10px;padding:11px 18px;font-weight:600;background:var(--lake);color:var(--snow)}
+.btn.ghost{background:transparent;color:var(--lake);border:1.5px solid var(--lake)}
+.link{background:none;border:0;padding:4px 0;color:var(--lake-2);text-decoration:underline;text-underline-offset:3px;font-size:15px}
+.live{font-family:var(--display);font-size:22px;font-weight:600}
+.small{font-size:14px;color:var(--lake-2)}
+details.svc{margin-top:8px;font-size:13px;color:var(--lake-2)}
+
+h2{font-family:var(--display);font-weight:700;font-size:26px;margin:0 0 10px;letter-spacing:.2px}
+section{margin-bottom:28px}
+
+/* region tiles: the one bold element — pass-sign plates on real thumbnails */
+.regions{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;margin:0 -18px;padding-left:18px;padding-right:18px;scrollbar-width:none}
+.regions::-webkit-scrollbar{display:none}
+.region{flex:0 0 74%;max-width:330px;scroll-snap-align:start;position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;border:0;padding:0;background:var(--lake);text-align:left}
+.region img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.region::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,50,74,0) 45%,rgba(18,50,74,.55));pointer-events:none}
+.plate{position:absolute;left:12px;bottom:12px;z-index:1;background:var(--sun);color:var(--lake);font-family:var(--display);font-weight:700;font-size:23px;line-height:1.05;padding:7px 11px 6px;border-radius:6px;box-shadow:0 0 0 2px var(--lake),0 0 0 4px var(--sun)}
+.plate small{display:block;font-family:var(--body);font-weight:500;font-size:13px;margin-top:2px}
+.region[aria-pressed="true"]{outline:4px solid var(--sun);outline-offset:-4px}
+.region[aria-pressed="true"] img{transform:scale(1.04)}
+
+.routes{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.routes li{border-bottom:1px solid var(--line)}
+.route{display:flex;gap:12px;align-items:center;width:100%;background:none;border:0;padding:10px 4px;text-align:left}
+.route .th{flex:none;width:96px;aspect-ratio:16/9;border-radius:8px;background:var(--line) center/cover no-repeat;position:relative;overflow:hidden}
+.route .th.mix{background:var(--lake);display:grid;place-items:center}
+.route .t{font-weight:600;line-height:1.25}
+.route .m{font-size:14px;color:var(--lake-2)}
+.route[aria-pressed="true"]{background:var(--snow);box-shadow:inset 4px 0 0 var(--sun)}
+.route.broken{opacity:.45}
+.route-wrap{display:flex;align-items:center}
+.route-wrap .route{flex:1}
+.rm{background:none;border:0;padding:10px;color:var(--lake-2);font-size:14px;text-decoration:underline}
+
+.durs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.dur{border:1.5px solid var(--lake);background:transparent;border-radius:10px;padding:10px 0 8px;font-family:var(--display);font-weight:700;font-size:24px;line-height:1}
+.dur span{display:block;font-family:var(--body);font-size:12px;font-weight:500;margin-top:3px}
+.dur[aria-pressed="true"]{background:var(--lake);color:var(--snow)}
+@media (max-width:380px){.durs{grid-template-columns:repeat(3,1fr)}}
+
+.opt{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:0}
+.opt input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--lake);flex:none}
+.opt .small{display:block}
+
+.addform{display:grid;gap:10px;margin-top:10px}
+.addform input,.addform select{width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--snow)}
+.err{color:#A33A2B;font-size:14px;margin:0}
+
+.history{list-style:none;padding:0;margin:0}
+.history li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.history b{font-family:var(--display);font-size:19px;font-weight:600}
+.foot{font-size:13px;color:var(--lake-2);margin-top:8px}
+
+.startbar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px calc(12px + var(--safe-b));background:linear-gradient(180deg,rgba(231,241,244,0),var(--mist) 30%);z-index:5}
+.start{display:block;width:100%;max-width:684px;margin:0 auto;border:0;border-radius:14px;padding:16px;background:var(--sun);color:var(--lake);font-family:var(--display);font-weight:700;font-size:26px;box-shadow:0 2px 0 var(--lake)}
+.start:disabled{opacity:.5}
+
+/* ---------- ride screen ---------- */
+#ride{position:fixed;inset:0;background:#000;overflow:hidden;z-index:10}
+#stage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+#yt,#stage iframe{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;border:0}
+@media (orientation:landscape){
+  #yt,#stage iframe{width:max(100vw,177.78vh);height:max(100vh,56.25vw);max-width:none;max-height:none}
+}
+#shield{position:absolute;inset:0;z-index:2}
+/* leave the bottom-right corner free so YouTube's "Skip ad" button stays tappable */
+#shield{clip-path:polygon(0 0,100% 0,100% calc(100% - 110px),calc(100% - 190px) calc(100% - 110px),calc(100% - 190px) 100%,0 100%)}
+
+.hud{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(14px + var(--safe-b));display:flex;align-items:flex-end;gap:18px;padding:10px 16px 10px 14px;border-radius:14px;background:rgba(18,50,74,.72);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100% - 230px);transition:opacity .4s}
+@media (orientation:portrait){.hud{max-width:calc(100% - 24px);right:12px;bottom:calc(130px + var(--safe-b));flex-wrap:wrap}}
+.hud .left{min-width:0}
+.big{font-family:var(--display);font-weight:700;font-size:54px;line-height:.9;font-variant-numeric:tabular-nums}
+.of{font-size:13px;opacity:.85;margin-top:4px}
+.metrics{display:flex;gap:16px;flex-wrap:wrap}
+.metric{min-width:56px}
+.metric b{display:block;font-family:var(--display);font-weight:600;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
+.metric span{font-size:12px;opacity:.85}
+.progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
+.progress i{display:block;height:100%;width:0;background:var(--sun);transition:width .25s linear}
+
+.ridetop{position:absolute;z-index:3;top:calc(10px + var(--safe-t));left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:opacity .4s}
+.title{background:rgba(18,50,74,.72);color:var(--snow);border-radius:10px;padding:7px 12px;max-width:60%;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.title b{font-family:var(--display);font-size:21px;font-weight:600;display:block;line-height:1.1}
+.title span{font-size:13px;opacity:.85}
+.ctrls{display:flex;gap:8px}
+.ic{width:48px;height:48px;border-radius:12px;border:0;background:rgba(18,50,74,.72);color:var(--snow);display:grid;place-items:center;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ic svg{width:22px;height:22px}
+.fade .ridetop{opacity:0;pointer-events:none}
+
+.center-msg{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(18,50,74,.85);color:var(--snow);border-radius:16px;padding:18px 22px;text-align:center;max-width:min(90vw,420px)}
+.center-msg b{font-family:var(--display);font-size:28px;display:block;margin-bottom:4px}
+.center-msg .btn{background:var(--sun);color:var(--lake);margin-top:12px}
+
+/* ---------- finish ---------- */
+#done{max-width:640px;margin:0 auto;padding:calc(30px + var(--safe-t)) 20px 40px}
+#done h1{font-family:var(--display);font-size:46px;line-height:1;margin:0 0 6px}
+#done .sub{color:var(--lake-2);margin:0 0 24px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.stat{background:var(--snow);padding:14px 16px}
+.stat b{display:block;font-family:var(--display);font-size:38px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--lake-2)}
+.done-actions{display:grid;gap:10px}
+.done-actions .start{box-shadow:0 2px 0 var(--lake)}
+
+.toast{position:fixed;z-index:30;left:50%;top:calc(16px + var(--safe-t));transform:translateX(-50%);background:var(--lake);color:var(--snow);padding:10px 16px;border-radius:12px;font-size:15px;max-width:90vw;box-shadow:0 4px 18px rgba(18,50,74,.25)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= SETUP ================= -->
+<main id="setup">
+  <div class="top">
+    <h1 class="wordmark">
+      <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><circle cx="44" cy="20" r="9" fill="#FFB21E"/><path d="M4 52 L22 26 L32 38 L40 30 L60 52 Z" fill="#12324A"/><path d="M22 26 L26.5 32 L22 30 L18 33 Z" fill="#fff"/></svg>
+      Vista Ride
+    </h1>
+    <span class="pill" id="bikePill">No bike</span>
+  </div>
+
+  <div class="bike" id="bikeCard">
+    <div id="bikeOff">
+      <p>Connect your Yesoul A1 so the video moves with your pedalling and you see your cadence and speed.</p>
+      <div class="row">
+        <button class="btn" id="connectBtn">Connect bike</button>
+        <button class="link" id="connectAllBtn">Bike not in the list? Show all devices</button>
+      </div>
+      <p class="small" style="margin:10px 0 0">Pedal a few turns first to wake the bike. If nothing shows up, turn on Bluetooth and Location on the phone.</p>
+    </div>
+    <div id="bikeNo" hidden>
+      <p style="margin:0">Bluetooth isn't available in this browser. Open this page in Chrome on Android to connect your bike. You can still ride with the timer.</p>
+    </div>
+    <div id="bikeOn" hidden>
+      <div class="row" style="justify-content:space-between">
+        <div><span class="small" id="bikeName">Connected</span><br><span class="live" id="bikeLive">0 rpm</span></div>
+        <button class="link" id="disconnectBtn">Disconnect</button>
+      </div>
+      <details class="svc"><summary>Bike details</summary><div id="svcList"></div></details>
+    </div>
+  </div>
+
+  <section>
+    <h2>Where to?</h2>
+    <div class="regions" id="regions" role="group" aria-label="Regions"></div>
+  </section>
+
+  <section>
+    <h2 id="routesHead">Routes</h2>
+    <ul class="routes" id="routes"></ul>
+  </section>
+
+  <section>
+    <h2>How long?</h2>
+    <div class="durs" id="durs" role="group" aria-label="Ride length"></div>
+  </section>
+
+  <section>
+    <label class="opt"><input type="checkbox" id="optFollow"><span>Video speed follows my pedalling<span class="small" id="followNote">Connect the bike to use this. The video slows down, speeds up and pauses with you.</span></span></label>
+    <label class="opt"><input type="checkbox" id="optSound"><span>Play the video's sound<span class="small">Some routes have background music, most have road and nature sounds.</span></span></label>
+    <label class="opt"><input type="checkbox" id="optResume"><span>Continue long routes where I left off<span class="small">Next time you pick the same route, it starts where your last ride ended.</span></span></label>
+  </section>
+
+  <section>
+    <details id="addBox">
+      <summary><h2 style="display:inline">Add your own route</h2></summary>
+      <form class="addform" id="addForm" novalidate>
+        <input id="addUrl" type="url" inputmode="url" placeholder="Paste a YouTube link" autocomplete="off">
+        <input id="addName" type="text" placeholder="Name (optional)" autocomplete="off">
+        <select id="addRegion"></select>
+        <p class="err" id="addErr" hidden></p>
+        <button class="btn" type="submit">Add route</button>
+      </form>
+      <p class="small">Tip: search YouTube for “virtual cycling 4K” plus a place. First-person videos filmed on sunny days work best.</p>
+    </details>
+  </section>
+
+  <section id="historySec" hidden>
+    <h2>Recent rides</h2>
+    <ul class="history" id="history"></ul>
+  </section>
+
+  <p class="foot">Videos stream from the YouTube channels that filmed them, so some may show ads. A route that can't play is skipped automatically.</p>
+
+  <div class="startbar"><button class="start" id="startBtn">Start ride</button></div>
+</main>
+
+<!-- ================= RIDE ================= -->
+<div id="ride" hidden>
+  <div id="stage"><div id="yt"></div></div>
+  <div id="shield"></div>
+
+  <div class="ridetop">
+    <div class="title"><b id="rTitle">…</b><span id="rRegion"></span></div>
+    <div class="ctrls">
+      <button class="ic" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button>
+      <button class="ic" id="skipBtn" aria-label="Next route"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l9 7-9 7z"/><rect x="16" y="5" width="3" height="14" rx="1"/></svg></button>
+      <button class="ic" id="endBtn" aria-label="End ride"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+    </div>
+  </div>
+
+  <div class="hud" id="hud">
+    <div class="left"><div class="big" id="hRemain">60:00</div><div class="of" id="hOf">left of 60 min</div></div>
+    <div class="metrics" id="hMetrics">
+      <div class="metric" data-k="cadence"><b id="mCad">–</b><span>rpm</span></div>
+      <div class="metric" data-k="speed"><b id="mSpd">–</b><span>km/h</span></div>
+      <div class="metric" data-k="dist"><b id="mDist">0.0</b><span>km</span></div>
+      <div class="metric" data-k="power" hidden><b id="mPow">–</b><span>watts</span></div>
+      <div class="metric" data-k="hr" hidden><b id="mHr">–</b><span>bpm</span></div>
+    </div>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+
+  <div class="center-msg" id="tapMsg" hidden><b>Ready when you are</b>Tap to start the video.<br><button class="btn" id="tapBtn">Start video</button></div>
+  <div class="center-msg" id="idleMsg" hidden><b>Paused</b>Start pedalling to continue.</div>
+  <div class="center-msg" id="pausedMsg" hidden><b>Paused</b><button class="btn" id="resumeBtn">Resume</button></div>
+  <div class="center-msg" id="loadMsg" hidden><b>Loading route</b><span id="loadText">Connecting to YouTube…</span></div>
+</div>
+
+<!-- ================= DONE ================= -->
+<main id="done" hidden>
+  <h1 id="dTitle">Ride complete</h1>
+  <p class="sub" id="dSub"></p>
+  <div class="stats" id="dStats"></div>
+  <div class="done-actions">
+    <button class="start" id="againBtn">Ride again</button>
+    <button class="btn ghost" id="backBtn">Back to routes</button>
+  </div>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Route library — real first-person rides filmed on sunny days.
+   ref = roughly how fast the camera was moving (km/h); used to
+   match video speed to your pedalling.
+   ============================================================ */
+const REGIONS = [
+  {id:"alps",      name:"Alps & Dolomites",       sub:"Passes, meadows, rock towers"},
+  {id:"italy",     name:"Italian coast & lakes",  sub:"Riviera, Amalfi, Como, Garda"},
+  {id:"france",    name:"France",                 sub:"Riviera, Provence, Alsace"},
+  {id:"macedonia", name:"Macedonia",              sub:"Ohrid and Mavrovo mountains"},
+  {id:"adriatic",  name:"Croatian coast",         sub:"Istria and the islands"},
+  {id:"lakes",     name:"Alpine lakes",           sub:"Austria, Switzerland, Bavaria"}
+];
+const ROUTES = [
+  // Alps & Dolomites
+  {id:"_3gFzb2M8Xo", r:"alps", t:"South Tyrol mountain trails", min:60, ref:16},
+  {id:"veYbkfExxXE", r:"alps", t:"Alta Badia sunshine loop", min:60, ref:18},
+  {id:"HbG3xWzEPMo", r:"alps", t:"South Tyrol grand tour", min:90, ref:18},
+  {id:"3sw2_N5eqNw", r:"alps", t:"Sella Ronda", min:120, ref:18},
+  {id:"c5EVL2OS_84", r:"alps", t:"Sella Ronda, counter-clockwise", min:60, ref:18},
+  {id:"rrjV2jHwRrE", r:"alps", t:"The complete Sella Ronda", min:180, ref:18},
+  {id:"U94MF1ZF81o", r:"alps", t:"Descent from Tre Cime di Lavaredo", min:30, ref:25},
+  {id:"NhXt1xPfikI", r:"alps", t:"Nauders to Schlanders, Vinschgau", min:60, ref:25},
+  {id:"TCqvOmJBywI", r:"alps", t:"Pustertal valley", min:null, ref:20},
+  {id:"pTeZlWPvEII", r:"alps", t:"Isarco river path", min:null, ref:20},
+  {id:"awaIJO4L5wA", r:"alps", t:"Mürren mountain village", min:30, ref:18, music:true},
+  {id:"rE6PFp1GKwM", r:"alps", t:"Grimsel road to Guttannen", min:30, ref:22, music:true},
+  {id:"6MSPyj3J27U", r:"alps", t:"Swiss Jura", min:null, ref:20},
+  // Italian coast & lakes
+  {id:"HrPQrMX_A8E", r:"italy", t:"Rapallo to Portofino and back", min:null, ref:18},
+  {id:"pRm0fYLP_p4", r:"italy", t:"Sorrento and the Amalfi coast", min:null, ref:18},
+  {id:"_gcrpo8qBx8", r:"italy", t:"Around Procida island", min:null, ref:16},
+  {id:"J_IqUBVf9sQ", r:"italy", t:"Lake Como from Tremezzo", min:null, ref:20},
+  {id:"Rvc9HSBlsxs", r:"italy", t:"Strada del Ponale, Lake Garda", min:60, ref:15},
+  {id:"dK98ElxOG-U", r:"italy", t:"Lake Garda", min:60, ref:20},
+  {id:"SbCfkpjNsuo", r:"italy", t:"Along the Mincio river", min:40, ref:18},
+  // France
+  {id:"tmDn465M5VY", r:"france", t:"Côte d'Azur coast and hills", min:null, ref:22},
+  {id:"RlY3S7Qbdi8", r:"france", t:"Luberon villages, Provence", min:null, ref:20},
+  {id:"sLr3xZTqH0I", r:"france", t:"Alsace vineyards in spring", min:null, ref:18},
+  {id:"NRz6dn9JNoc", r:"france", t:"Mont Ventoux climb, part 2", min:73, ref:14},
+  {id:"gTCGjE2jc_I", r:"france", t:"Mont Ventoux, part 9", min:77, ref:16},
+  {id:"7ksAIoG54iM", r:"france", t:"Sunny Bordeaux", min:null, ref:15},
+  // Macedonia
+  {id:"voA67nyu0j4", r:"macedonia", t:"Ohrid to Kichevo mountain road", min:null, ref:55, note:"filmed from a car"},
+  {id:"SVPIap2umys", r:"macedonia", t:"Mavrovo mountain bike marathon", min:null, ref:16, note:"2014"},
+  // Croatian coast
+  {id:"oAcHtmUfufA", r:"adriatic", t:"Istria coast on a hot August day", min:null, ref:20},
+  {id:"ZTp55aBDO74", r:"adriatic", t:"Čikat seaside promenade, Lošinj", min:null, ref:14},
+  // Alpine lakes
+  {id:"P8evFjaU1Ug", r:"lakes", t:"Hallstatt lake", min:60, ref:20},
+  {id:"Pzx9hk1UT1Y", r:"lakes", t:"Lake Achensee", min:80, ref:20},
+  {id:"wqXfr35VJKY", r:"lakes", t:"Lake Thun at sunrise", min:30, ref:20},
+  {id:"MKs-4C7j5Lg", r:"lakes", t:"Lake Thun", min:30, ref:20, music:true},
+  {id:"VUO0w5ODUms", r:"lakes", t:"Lake Tegernsee loop", min:60, ref:20},
+  {id:"v30uG7yFf4g", r:"lakes", t:"Allgäu lakes and rivers", min:60, ref:20},
+  {id:"AX8sC_kR46M", r:"lakes", t:"Golden autumn in Bavaria", min:60, ref:20}
+];
+const DURATIONS = [30,45,60,75,90,120];
+
+/* ---------- small helpers ---------- */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("vr."+k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("vr."+k, JSON.stringify(v)); }catch(e){} }
+};
+const params = new URLSearchParams(location.search);
+const DEMO = params.has("demo");
+let toastTimer;
+function toast(msg, ms=3500){
+  const t=$("toast"); t.textContent=msg; t.hidden=false;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true, ms);
+}
+function fmt(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}` : `${m}:${String(s).padStart(2,"0")}`;
+}
+function thumb(id){ return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- state ---------- */
+const S = {
+  region: store.get("region","alps"),
+  route: store.get("route","mix"),
+  dur: store.get("dur",45),
+  follow: store.get("follow",true),
+  sound: store.get("sound",true),
+  resume: store.get("resume",true),
+  custom: store.get("custom",[]),
+  broken: new Set()
+};
+function allRoutes(){ return ROUTES.concat(S.custom); }
+function regionRoutes(r){ return allRoutes().filter(x=>x.r===r); }
+function routeById(id){ return allRoutes().find(x=>x.id===id); }
+function regionName(r){ const g=REGIONS.find(x=>x.id===r); return g?g.name:""; }
+
+/* ============================================================
+   Setup screen rendering
+   ============================================================ */
+function renderRegions(){
+  const el=$("regions"); el.innerHTML="";
+  for(const g of REGIONS){
+    const first=regionRoutes(g.id)[0];
+    const b=document.createElement("button");
+    b.className="region"; b.setAttribute("aria-pressed", String(S.region===g.id));
+    b.innerHTML=`${first?`<img alt="" loading="lazy" src="${thumb(first.id)}">`:""}<span class="plate">${esc(g.name)}<small>${esc(g.sub)}</small></span>`;
+    const img=b.querySelector("img"); let alt=1;
+    if(img) img.onerror=()=>{ const next=regionRoutes(g.id)[alt++]; if(next) img.src=thumb(next.id); else img.remove(); };
+    b.onclick=()=>{ S.region=g.id; S.route="mix"; store.set("region",S.region); store.set("route","mix"); renderRegions(); renderRoutes(); };
+    el.appendChild(b);
+  }
+  const sel=el.querySelector('[aria-pressed="true"]');
+  if(sel) requestAnimationFrame(()=>sel.scrollIntoView({block:"nearest",inline:"nearest"}));
+}
+function renderRoutes(){
+  const list=regionRoutes(S.region);
+  $("routesHead").textContent = `Routes in ${regionName(S.region)}`;
+  const ul=$("routes"); ul.innerHTML="";
+  const mix=document.createElement("li");
+  mix.innerHTML=`<button class="route" aria-pressed="${S.route==="mix"}"><span class="th mix"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFB21E" stroke-width="2.2" stroke-linecap="round"><path d="M3 7h3c5 0 7 10 12 10h3M3 17h3c2 0 3.5-1.6 4.8-3.6M13.2 9.6C14.5 7.6 16 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg></span><span><span class="t">Mix this region</span><br><span class="m">Plays the ${list.length} routes in random order until your time is up</span></span></button>`;
+  mix.querySelector("button").onclick=()=>{ S.route="mix"; store.set("route","mix"); renderRoutes(); };
+  ul.appendChild(mix);
+  for(const r of list){
+    const li=document.createElement("li");
+    const len = r.min ? (r.min>=120?`about ${Math.round(r.min/60*10)/10} h`:`about ${r.min} min`) : "length shown when it plays";
+    const extra=[len, r.music?"with music":"", r.note||"", r.custom?"added by you":""].filter(Boolean).join(", ");
+    li.innerHTML=`<div class="route-wrap"><button class="route${S.broken.has(r.id)?" broken":""}" aria-pressed="${S.route===r.id}"><span class="th"><img alt="" loading="lazy" src="${thumb(r.id)}" style="width:100%;height:100%;object-fit:cover;display:block"></span><span><span class="t">${esc(r.t)}</span><br><span class="m">${esc(extra)}</span></span></button>${r.custom?`<button class="rm" aria-label="Remove ${esc(r.t)}">Remove</button>`:""}</div>`;
+    li.querySelector(".route").onclick=()=>{ S.route=r.id; store.set("route",r.id); renderRoutes(); };
+    // a missing thumbnail means the video was removed from YouTube
+    li.querySelector(".th img").onerror=function(){ this.remove(); if(!r.custom){ S.broken.add(r.id); li.querySelector(".route").classList.add("broken"); li.querySelector(".m").textContent="No longer on YouTube, will be skipped"; } };
+    const rm=li.querySelector(".rm");
+    if(rm) rm.onclick=()=>{ S.custom=S.custom.filter(x=>x.id!==r.id); store.set("custom",S.custom); if(S.route===r.id) S.route="mix"; renderRegions(); renderRoutes(); toast("Route removed"); };
+    ul.appendChild(li);
+  }
+  updateStart();
+}
+function renderDurs(){
+  const el=$("durs"); el.innerHTML="";
+  for(const d of DURATIONS){
+    const b=document.createElement("button");
+    b.className="dur"; b.setAttribute("aria-pressed", String(S.dur===d));
+    b.innerHTML = d>=60 && d%60===0 ? `${d/60}<span>${d===60?"hour":"hours"}</span>` : `${d}<span>min</span>`;
+    b.onclick=()=>{ S.dur=d; store.set("dur",d); renderDurs(); updateStart(); };
+    el.appendChild(b);
+  }
+}
+function updateStart(){
+  $("startBtn").textContent = `Start ${S.dur>=60&&S.dur%60===0 ? (S.dur/60)+(S.dur===60?" hour":" hours") : S.dur+" min"} ride`;
+}
+function renderOptions(){
+  $("optFollow").checked=S.follow; $("optSound").checked=S.sound; $("optResume").checked=S.resume;
+  $("optFollow").onchange=e=>{S.follow=e.target.checked; store.set("follow",S.follow);};
+  $("optSound").onchange=e=>{S.sound=e.target.checked; store.set("sound",S.sound);};
+  $("optResume").onchange=e=>{S.resume=e.target.checked; store.set("resume",S.resume);};
+  const sel=$("addRegion"); sel.innerHTML=REGIONS.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join("");
+}
+function renderHistory(){
+  const h=store.get("history",[]);
+  $("historySec").hidden=!h.length;
+  $("history").innerHTML=h.slice(0,8).map(x=>{
+    const d=new Date(x.at);
+    return `<li><span>${d.toLocaleDateString(undefined,{day:"numeric",month:"short"})}<br><span class="small">${esc(x.where)}</span></span><span style="text-align:right"><b>${Math.round(x.sec/60)} min</b><br><span class="small">${x.km.toFixed(1)} km</span></span></li>`;
+  }).join("");
+}
+
+/* ---------- add your own route ---------- */
+function parseYouTubeId(u){
+  u=(u||"").trim();
+  if(/^[\w-]{11}$/.test(u)) return u;
+  const m=u.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/);
+  return m?m[1]:null;
+}
+$("addForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const id=parseYouTubeId($("addUrl").value);
+  const err=$("addErr");
+  if(!id){ err.textContent="That doesn't look like a YouTube video link. Copy it with Share → Copy link in the YouTube app."; err.hidden=false; return; }
+  if(routeById(id)){ err.textContent="That video is already in your routes."; err.hidden=false; return; }
+  err.hidden=true;
+  const r={id, r:$("addRegion").value, t:$("addName").value.trim()||"My route", min:null, ref:20, custom:true};
+  S.custom.push(r); store.set("custom",S.custom);
+  S.region=r.r; S.route=id; store.set("region",S.region); store.set("route",id);
+  $("addUrl").value=""; $("addName").value="";
+  renderRegions(); renderRoutes(); toast("Route added");
+});
+
+/* ============================================================
+   Bluetooth: FTMS (Indoor Bike Data), Cycling Power, CSC
+   ============================================================ */
+const UUID={FTMS:0x1826, IBD:0x2ad2, CPS:0x1818, CPM:0x2a63, CSC:0x1816, CSCM:0x2a5b, HRS:0x180d, HRM:0x2a37};
+const sensor={cadence:null, speed:null, power:null, hr:null, energy:null, at:0, connected:false, name:"", seenPower:false, seenHr:false, speedEstimated:false};
+let btDevice=null, reconnectTries=0, wantConnected=false;
+const prevCrank={}, prevWheel={};
+const WHEEL_M=2.096;
+
+function crankCadence(store, revs, t, now){
+  let out;
+  if(store.revs!==undefined){
+    const dr=(revs-store.revs+65536)%65536, dt=(t-store.t+65536)%65536;
+    if(dt>0 && dr<60){ out=dr/(dt/1024)*60; store.moveAt=now; }
+    else if(now-(store.moveAt||0)>2500) out=0;
+  }
+  store.revs=revs; store.t=t; return out;
+}
+function wheelSpeed(store, revs, t, now){
+  let out;
+  if(store.revs!==undefined){
+    const dr=revs-store.revs, dt=(t-store.t+65536)%65536;
+    if(dt>0 && dr>=0 && dr<200){ out=dr*WHEEL_M/(dt/1024)*3.6; store.moveAt=now; }
+    else if(now-(store.moveAt||0)>2500) out=0;
+  }
+  store.revs=revs; store.t=t; return out;
+}
+function parseIBD(dv){
+  const f=dv.getUint16(0,true); let o=2; const r={}; const L=dv.byteLength;
+  const need=n=>o+n<=L;
+  if(!(f&0x1)){ if(need(2)) r.speed=dv.getUint16(o,true)/100; o+=2; }
+  if(f&0x2) o+=2;
+  if(f&0x4){ if(need(2)) r.cadence=dv.getUint16(o,true)/2; o+=2; }
+  if(f&0x8) o+=2;
+  if(f&0x10) o+=3;
+  if(f&0x20) o+=2;
+  if(f&0x40){ if(need(2)) r.power=dv.getInt16(o,true); o+=2; }
+  if(f&0x80) o+=2;
+  if(f&0x100){ if(need(2)) r.energy=dv.getUint16(o,true); o+=5; }
+  if(f&0x200){ if(need(1)) r.hr=dv.getUint8(o); o+=1; }
+  return r;
+}
+function parseCPM(dv){
+  const f=dv.getUint16(0,true); let o=2; const r={}; const now=performance.now();
+  r.power=dv.getInt16(o,true); o+=2;
+  if(f&0x1) o+=1;
+  if(f&0x4) o+=2;
+  if(f&0x10){ if(o+6<=dv.byteLength){ const s=wheelSpeed(prevWheel, dv.getUint32(o,true), dv.getUint16(o+4,true), now); if(s!==undefined) r.speed=s; } o+=6; }
+  if(f&0x20){ if(o+4<=dv.byteLength){ const c=crankCadence(prevCrank, dv.getUint16(o,true), dv.getUint16(o+2,true), now); if(c!==undefined) r.cadence=c; } o+=4; }
+  return r;
+}
+function parseCSC(dv){
+  const f=dv.getUint8(0); let o=1; const r={}; const now=performance.now();
+  if(f&0x1){ if(o+6<=dv.byteLength){ const s=wheelSpeed(prevWheel, dv.getUint32(o,true), dv.getUint16(o+4,true), now); if(s!==undefined) r.speed=s; } o+=6; }
+  if(f&0x2){ if(o+4<=dv.byteLength){ const c=crankCadence(prevCrank, dv.getUint16(o,true), dv.getUint16(o+2,true), now); if(c!==undefined) r.cadence=c; } }
+  return r;
+}
+function parseHR(dv){ const f=dv.getUint8(0); return {hr: (f&1)?dv.getUint16(1,true):dv.getUint8(1)}; }
+
+function feed(r){
+  if(r.cadence!==undefined) sensor.cadence=Math.max(0,r.cadence);
+  if(r.speed!==undefined){ sensor.speed=Math.max(0,r.speed); sensor.speedEstimated=false; }
+  if(r.power!==undefined){ sensor.power=Math.max(0,r.power); if(r.power>0) sensor.seenPower=true; }
+  if(r.hr!==undefined && r.hr>0){ sensor.hr=r.hr; sensor.seenHr=true; }
+  if(r.energy!==undefined) sensor.energy=r.energy;
+  sensor.at=performance.now();
+  updateBikeUI();
+}
+
+async function connectBike(all){
+  if(!navigator.bluetooth){ toast("Bluetooth isn't available in this browser. Use Chrome on Android."); return; }
+  const optionalServices=[UUID.FTMS,UUID.CPS,UUID.CSC,UUID.HRS,"device_information"];
+  const opts = all ? {acceptAllDevices:true, optionalServices}
+    : {filters:[{services:[UUID.FTMS]},{services:[UUID.CPS]},{services:[UUID.CSC]},{namePrefix:"YS"},{namePrefix:"Yesoul"},{namePrefix:"YESOUL"}], optionalServices};
+  try{
+    btDevice=await navigator.bluetooth.requestDevice(opts);
+  }catch(e){ if(e && e.name!=="NotFoundError") toast("Couldn't open the Bluetooth picker: "+e.message); return; }
+  btDevice.addEventListener("gattserverdisconnected", onDisconnected);
+  wantConnected=true; reconnectTries=0;
+  await setupGatt();
+}
+async function setupGatt(){
+  $("bikePill").textContent="Connecting…";
+  try{
+    const server=await btDevice.gatt.connect();
+    const services=await server.getPrimaryServices();
+    const ids=services.map(s=>s.uuid);
+    const has=n=>ids.some(u=>u.startsWith("0000"+n.toString(16).padStart(4,"0")));
+    $("svcList").innerHTML="Services: "+ids.map(u=>u.slice(4,8)).join(", ");
+    let used="";
+    if(has(UUID.FTMS)){
+      const ch=await (await server.getPrimaryService(UUID.FTMS)).getCharacteristic(UUID.IBD);
+      ch.addEventListener("characteristicvaluechanged", e=>feed(parseIBD(e.target.value)));
+      await ch.startNotifications(); used="FTMS";
+    } else if(has(UUID.CPS)){
+      const ch=await (await server.getPrimaryService(UUID.CPS)).getCharacteristic(UUID.CPM);
+      ch.addEventListener("characteristicvaluechanged", e=>feed(parseCPM(e.target.value)));
+      await ch.startNotifications(); used="Cycling Power";
+    } else if(has(UUID.CSC)){
+      const ch=await (await server.getPrimaryService(UUID.CSC)).getCharacteristic(UUID.CSCM);
+      ch.addEventListener("characteristicvaluechanged", e=>feed(parseCSC(e.target.value)));
+      await ch.startNotifications(); used="Speed & Cadence";
+    }
+    if(has(UUID.HRS)){
+      try{ const ch=await (await server.getPrimaryService(UUID.HRS)).getCharacteristic(UUID.HRM);
+        ch.addEventListener("characteristicvaluechanged", e=>feed(parseHR(e.target.value)));
+        await ch.startNotifications(); }catch(e){}
+    }
+    if(!used){
+      $("svcList").innerHTML+="<br>None of these is a standard bike data service. Send a screenshot of this list and it can be added.";
+      toast("Connected, but the bike isn't sending standard cycling data. Open Bike details.",6000);
+    } else {
+      $("svcList").innerHTML+="<br>Reading: "+used;
+    }
+    sensor.connected=true; sensor.name=btDevice.name||"Bike"; reconnectTries=0;
+    updateBikeUI();
+    if(used) toast(`Connected to ${sensor.name}`);
+  }catch(e){
+    sensor.connected=false; updateBikeUI();
+    toast("Couldn't connect: "+(e.message||e)+". Pedal to wake the bike and try again.",6000);
+  }
+}
+function onDisconnected(){
+  sensor.connected=false; sensor.cadence=null; sensor.speed=null; updateBikeUI();
+  if(wantConnected && reconnectTries<5){
+    reconnectTries++; toast("Bike disconnected. Reconnecting…");
+    setTimeout(()=>{ if(wantConnected) setupGatt(); }, 1500*reconnectTries);
+  }
+}
+function disconnectBike(){
+  wantConnected=false;
+  try{ btDevice && btDevice.gatt.connected && btDevice.gatt.disconnect(); }catch(e){}
+  sensor.connected=false; updateBikeUI();
+}
+function updateBikeUI(){
+  const on=sensor.connected;
+  $("bikeOff").hidden = on || !btSupported();
+  $("bikeNo").hidden = on || btSupported();
+  $("bikeOn").hidden = !on;
+  $("bikePill").textContent = on ? `${Math.round(sensor.cadence||0)} rpm` : "No bike";
+  $("bikePill").classList.toggle("on", on);
+  $("bikeName").textContent = on ? `Connected to ${sensor.name}` : "";
+  $("bikeLive").textContent = `${Math.round(sensor.cadence||0)} rpm${sensor.speed!=null?`, ${sensor.speed.toFixed(1)} km/h`:""}`;
+  $("followNote").textContent = on ? "The video slows down, speeds up and pauses with you." : "Connect the bike to use this. The video slows down, speeds up and pauses with you.";
+}
+function btSupported(){ return DEMO || !!navigator.bluetooth; }
+$("connectBtn").onclick=()=>connectBike(false);
+$("connectAllBtn").onclick=()=>connectBike(true);
+$("disconnectBtn").onclick=disconnectBike;
+
+/* demo pedalling for trying the app without the bike: add ?demo to the address */
+function startDemo(){
+  sensor.connected=true; sensor.name="Demo bike"; $("svcList").textContent="Demo mode: simulated pedalling";
+  let t=0;
+  setInterval(()=>{
+    t+=0.5;
+    const stop = DEMO_STOP.on;
+    const cad = stop?0: 78+10*Math.sin(t/20);
+    feed({cadence:cad, speed:cad*0.34, power: stop?0:150+40*Math.sin(t/15), hr: 128+8*Math.sin(t/30)});
+  },500);
+}
+const DEMO_STOP={on:false};
+
+/* ============================================================
+   YouTube player
+   ============================================================ */
+let ytReady=null, player=null, playerState=-1;
+function loadYT(){
+  if(ytReady) return ytReady;
+  ytReady=new Promise((res,rej)=>{
+    if(window.YT && window.YT.Player) return res();
+    const prev=window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady=()=>{ prev&&prev(); res(); };
+    const s=document.createElement("script");
+    s.src="https://www.youtube.com/iframe_api"; s.async=true;
+    s.onerror=()=>{ ytReady=null; rej(new Error("YouTube didn't load")); };
+    document.head.appendChild(s);
+    setTimeout(()=>{ if(!(window.YT&&window.YT.Player)){ ytReady=null; rej(new Error("YouTube didn't load")); } },15000);
+  });
+  return ytReady;
+}
+
+/* ============================================================
+   Ride engine
+   ============================================================ */
+const R = {};  // current ride
+function resetRide(){
+  Object.assign(R,{
+    active:false, total:S.dur*60, sec:0, km:0, cadSum:0, cadSec:0, spdSum:0, kj:0,
+    queue:[], idx:-1, current:null, started:false, userPaused:false, idle:false, idleSince:0,
+    lastTick:performance.now(), rate:1, rateAt:0, played:[], lastSave:0, warned5:false, warnedHalf:false,
+    loadTimer:null, energyStart:null, hudTimer:null
+  });
+}
+function buildQueue(){
+  const list=regionRoutes(S.region).filter(r=>!S.broken.has(r.id));
+  if(S.route!=="mix"){
+    const first=list.find(r=>r.id===S.route) || routeById(S.route);
+    return [first].concat(shuffle(list.filter(r=>r.id!==S.route)));
+  }
+  return shuffle(list);
+}
+
+async function startRide(){
+  resetRide();
+  R.queue=buildQueue();
+  if(!R.queue.length){ toast("No routes to play in this region. Add one below."); return; }
+  R.active=true;
+  showScreen("ride");
+  setMsg("loadMsg"); $("loadText").textContent="Connecting to YouTube…";
+  goFullscreen();
+  keepAwake();
+  try{ await loadYT(); }
+  catch(e){
+    setMsg(null); exitRide(false);
+    toast("Couldn't reach YouTube. Check the internet connection and try again.",6000); return;
+  }
+  nextRoute();
+  tickTimer = setInterval(tick, 250);
+  showHud();
+}
+
+function nextRoute(reason){
+  if(!R.active) return;
+  R.idx++;
+  if(R.idx>=R.queue.length){
+    const again=R.queue.filter(r=>!S.broken.has(r.id));
+    if(!again.length){ toast("None of these routes could play. Try another region.",6000); finishRide(true); return; }
+    R.queue=R.queue.concat(shuffle(again));
+  }
+  const r=R.queue[R.idx];
+  if(S.broken.has(r.id)) return nextRoute();
+  R.current=r; R.started=false;
+  if(!R.played.includes(r.t)) R.played.push(r.t);
+  $("rTitle").textContent=r.t;
+  $("rRegion").textContent=regionName(r.r)+(r.note?`, ${r.note}`:"");
+  setMsg("loadMsg"); $("loadText").textContent=r.t;
+  const pos = S.resume ? (store.get("pos",{})[r.id]||0) : 0;
+  const start = pos>30 ? Math.floor(pos) : 0;
+  if(reason) toast(reason);
+  if(!player){
+    player=new YT.Player("yt",{
+      videoId:r.id,
+      playerVars:{autoplay:1, controls:0, disablekb:1, fs:0, rel:0, playsinline:1, iv_load_policy:3, modestbranding:1, start, origin:location.origin},
+      events:{onReady:onPlayerReady, onStateChange:onPlayerState, onError:onPlayerError}
+    });
+  } else {
+    player.loadVideoById({videoId:r.id, startSeconds:start});
+    applySound();
+  }
+  clearTimeout(R.loadTimer);
+  R.loadTimer=setTimeout(()=>{ if(R.active && !R.started && !R.userPaused) setMsg("tapMsg"); }, 5000);
+}
+function applySound(){
+  if(!player || !player.mute) return;
+  try{ if(S.sound){ player.unMute(); player.setVolume(80); } else player.mute(); }catch(e){}
+}
+function onPlayerReady(){ applySound(); try{ player.playVideo(); }catch(e){} }
+function onPlayerState(e){
+  playerState=e.data;
+  if(e.data===1){ // playing
+    if(!R.started){ R.started=true; setMsg(null); R.lastTick=performance.now(); }
+    if(R.userPaused || R.idle){ try{ player.pauseVideo(); }catch(_){} }
+    else setMsg(null);
+  }
+  if(e.data===0){ // ended
+    if(R.current){ const p=store.get("pos",{}); delete p[R.current.id]; store.set("pos",p); }
+    nextRoute("On to the next route");
+  }
+}
+function onPlayerError(e){
+  if(R.current){ S.broken.add(R.current.id); }
+  nextRoute("That route can't play here, so it was skipped");
+}
+
+let tickTimer=null;
+function tick(){
+  if(!R.active) return;
+  const now=performance.now();
+  const dt=Math.min(2,(now-R.lastTick)/1000)*(window.__timeScale||1);
+  R.lastTick=now;
+
+  // bike went quiet: treat as stopped
+  if(sensor.connected && now-sensor.at>4000){ sensor.cadence=0; if(sensor.speed!==null) sensor.speed=0; }
+
+  const live = sensor.connected;
+  const cad = live ? (sensor.cadence||0) : null;
+  let spd = live ? sensor.speed : null;
+  if(live && (spd===null || spd===undefined || (spd<1 && cad>20))){ spd=(cad||0)*0.34; sensor.speedEstimated=true; }
+
+  // pause video when pedalling stops (only when following the bike)
+  if(live && S.follow && R.started){
+    if(cad<5){
+      if(!R.idleSince) R.idleSince=now;
+      if(!R.idle && now-R.idleSince>3000){ R.idle=true; try{player.pauseVideo();}catch(e){} if(!R.userPaused) setMsg("idleMsg"); }
+    } else {
+      R.idleSince=0;
+      if(R.idle && cad>12){ R.idle=false; if(!R.userPaused){ setMsg(null); try{player.playVideo();}catch(e){} } }
+    }
+  } else if(R.idle){ R.idle=false; if(!R.userPaused){ setMsg(null); try{player.playVideo();}catch(e){} } }
+
+  const running = R.started && !R.userPaused && !R.idle;
+  if(running){
+    R.sec+=dt;
+    if(live){
+      R.km += (spd||0)/3600*dt;
+      if(cad>0){ R.cadSum+=cad*dt; R.cadSec+=dt; R.spdSum+=(spd||0)*dt; }
+      if(sensor.seenPower) R.kj += (sensor.power||0)*dt/1000;
+    }
+  }
+
+  // match video speed to riding speed
+  if(live && S.follow && running && now-R.rateAt>2500 && player && player.setPlaybackRate){
+    R.rateAt=now;
+    const ref=(R.current&&R.current.ref)||20;
+    let want=(spd||0)/ref;
+    let rates=[0.25,0.5,0.75,1,1.25,1.5,1.75,2];
+    try{ const a=player.getAvailablePlaybackRates(); if(a&&a.length) rates=a; }catch(e){}
+    rates=rates.filter(x=>x>=0.5&&x<=2);
+    want=Math.min(2,Math.max(0.5,want));
+    const best=rates.reduce((a,b)=>Math.abs(b-want)<Math.abs(a-want)?b:a, 1);
+    if(best!==R.rate){ R.rate=best; try{player.setPlaybackRate(best);}catch(e){} }
+  } else if((!live || !S.follow) && R.rate!==1 && player && player.setPlaybackRate){ R.rate=1; try{player.setPlaybackRate(1);}catch(e){} }
+
+  // remember position on long routes
+  if(R.started && R.current && now-R.lastSave>10000 && player && player.getCurrentTime){
+    R.lastSave=now;
+    try{ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p); }catch(e){}
+  }
+
+  // HUD
+  const left=R.total-R.sec;
+  $("hRemain").textContent=fmt(left);
+  $("hOf").textContent=`left of ${S.dur} min`;
+  $("prog").style.width=Math.min(100,R.sec/R.total*100)+"%";
+  document.querySelector('[data-k="cadence"]').hidden=!live;
+  document.querySelector('[data-k="speed"]').hidden=!live;
+  document.querySelector('[data-k="power"]').hidden=!(live&&sensor.seenPower);
+  document.querySelector('[data-k="hr"]').hidden=!(live&&sensor.seenHr);
+  if(live){
+    $("mCad").textContent=Math.round(cad);
+    $("mSpd").textContent=(spd||0).toFixed(1);
+    $("mPow").textContent=Math.round(sensor.power||0);
+    $("mHr").textContent=Math.round(sensor.hr||0);
+  }
+  $("mDist").textContent=live? R.km.toFixed(1) : fmt(R.sec);
+  document.querySelector('[data-k="dist"] span').textContent = live ? "km" : "ridden";
+
+  if(!R.warnedHalf && R.sec>=R.total/2 && R.total>=1800){ R.warnedHalf=true; toast("Halfway there"); }
+  if(!R.warned5 && left<=300 && R.total>600){ R.warned5=true; toast("5 minutes to go"); }
+  if(left<=0) finishRide(false);
+}
+
+function setMsg(id){
+  for(const m of ["tapMsg","idleMsg","pausedMsg","loadMsg"]) $(m).hidden = m!==id;
+}
+function togglePause(){
+  if(!R.active) return;
+  R.userPaused=!R.userPaused;
+  if(R.userPaused){ try{player.pauseVideo();}catch(e){} setMsg("pausedMsg"); }
+  else { setMsg(R.idle?"idleMsg":null); if(!R.idle) try{player.playVideo();}catch(e){} R.lastTick=performance.now(); }
+  $("pauseBtn").setAttribute("aria-label", R.userPaused?"Resume":"Pause");
+  $("pauseBtn").innerHTML = R.userPaused ? ICON_PLAY : ICON_PAUSE;
+  showHud();
+}
+const ICON_PAUSE=$("pauseBtn").innerHTML;
+const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg>';
+$("pauseBtn").onclick=togglePause;
+$("resumeBtn").onclick=togglePause;
+$("skipBtn").onclick=()=>{ if(R.current){ try{ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p);}catch(e){} } nextRoute(); showHud(); };
+$("endBtn").onclick=()=>finishRide(true);
+$("tapBtn").onclick=()=>{ try{ applySound(); player.playVideo(); }catch(e){} setMsg("loadMsg"); };
+$("shield").onclick=showHud;
+
+function showHud(){
+  $("ride").classList.remove("fade");
+  clearTimeout(R.hudTimer);
+  R.hudTimer=setTimeout(()=>{ if(R.active && !R.userPaused) $("ride").classList.add("fade"); }, 7000);
+}
+
+function finishRide(early){
+  if(!R.active) return;
+  R.active=false;
+  R.sec=Math.min(R.sec,R.total);
+  $("toast").hidden=true;
+  clearInterval(tickTimer); clearTimeout(R.loadTimer); clearTimeout(R.hudTimer);
+  try{ if(R.current && player.getCurrentTime){ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p);} }catch(e){}
+  try{ player.pauseVideo(); }catch(e){}
+  releaseWake(); leaveFullscreen();
+  if(!early) chime();
+  const where=R.played.length===1?R.played[0]:regionName(S.region);
+  if(R.sec>=60){
+    const h=store.get("history",[]);
+    h.unshift({at:Date.now(), sec:R.sec, km:R.km, where});
+    store.set("history",h.slice(0,50));
+  }
+  // summary
+  $("dTitle").textContent = early ? "Ride ended" : "Ride complete";
+  $("dSub").textContent = early ? `You rode ${fmt(R.sec)} of the planned ${S.dur} minutes.` : `${S.dur} minutes through ${where}. Nice work.`;
+  const stats=[[fmt(R.sec),"riding time"]];
+  if(sensor.connected || R.km>0){
+    stats.push([R.km.toFixed(1),"km"]);
+    if(R.cadSec>0){ stats.push([Math.round(R.cadSum/R.cadSec),"average rpm"]); stats.push([(R.spdSum/R.cadSec).toFixed(1),"average km/h"]); }
+    if(R.kj>0) stats.push([Math.round(R.kj),"kcal, estimated"]);
+  }
+  stats.push([String(R.played.length), R.played.length===1?"route":"routes"]);
+  $("dStats").innerHTML=stats.map(s=>`<div class="stat"><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join("");
+  showScreen("done");
+  renderHistory();
+}
+function exitRide(){ R.active=false; clearInterval(tickTimer); releaseWake(); leaveFullscreen(); showScreen("setup"); }
+
+/* ---------- screen, fullscreen, wake lock, chime ---------- */
+function showScreen(name){
+  $("setup").hidden=name!=="setup"; $("ride").hidden=name!=="ride"; $("done").hidden=name!=="done";
+  window.scrollTo(0,0);
+}
+function goFullscreen(){
+  const el=document.documentElement;
+  try{ const p=el.requestFullscreen && el.requestFullscreen({navigationUI:"hide"}); if(p&&p.then) p.then(()=>{ try{ screen.orientation.lock("landscape").catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){}
+}
+function leaveFullscreen(){ try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(e){} try{ screen.orientation.unlock(); }catch(e){} }
+let wake=null;
+async function keepAwake(){ try{ if("wakeLock" in navigator) wake=await navigator.wakeLock.request("screen"); }catch(e){} }
+function releaseWake(){ try{ wake&&wake.release(); }catch(e){} wake=null; }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && R.active) keepAwake(); });
+function chime(){
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    [[659,0],[880,.18],[1175,.36]].forEach(([f,t])=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.frequency.value=f; o.type="sine"; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(0.0001,ac.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(0.25,ac.currentTime+t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+t+0.5);
+      o.start(ac.currentTime+t); o.stop(ac.currentTime+t+0.55);
+    });
+  }catch(e){}
+}
+
+$("startBtn").onclick=startRide;
+$("againBtn").onclick=startRide;
+$("backBtn").onclick=()=>{ showScreen("setup"); renderRoutes(); };
+
+/* ---------- boot ---------- */
+renderRegions(); renderRoutes(); renderDurs(); renderOptions(); renderHistory();
+if(DEMO) startDemo();
+updateBikeUI();
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+// test hooks
+window.__vr={S,R,sensor,DEMO_STOP,startRide,finishRide,nextRoute};
+</script>
+</body>
+</html>
