@@ -111,6 +111,8 @@ section{margin-bottom:28px}
   #yt,#stage iframe{width:max(100vw,177.78vh);height:max(100vh,56.25vw);max-width:none;max-height:none}
 }
 #shield{position:absolute;inset:0;z-index:2}
+#musicBox{position:absolute;left:0;top:0;width:200px;height:200px;opacity:0;pointer-events:none;z-index:0}
+#musicBox iframe,#ytm{width:200px;height:200px}
 /* leave the bottom-right corner free so YouTube's "Skip ad" button stays tappable */
 #shield{clip-path:polygon(0 0,100% 0,100% calc(100% - 110px),calc(100% - 190px) calc(100% - 110px),calc(100% - 190px) 100%,0 100%)}
 
@@ -188,6 +190,11 @@ section{margin-bottom:28px}
   </div>
 
   <section>
+    <h2>How long?</h2>
+    <div class="durs" id="durs" role="group" aria-label="Ride length"></div>
+  </section>
+
+  <section>
     <h2>Where to?</h2>
     <div class="regions" id="regions" role="group" aria-label="Regions"></div>
   </section>
@@ -198,13 +205,16 @@ section{margin-bottom:28px}
   </section>
 
   <section>
-    <h2>How long?</h2>
-    <div class="durs" id="durs" role="group" aria-label="Ride length"></div>
+    <h2>Sound</h2>
+    <div class="sounds" id="sounds" role="radiogroup" aria-label="Sound during the ride">
+      <label class="opt"><input type="radio" name="sound" value="music"><span>My music<span class="small">Routes in Italy play your Italian songs, all other routes play your main track.</span></span></label>
+      <label class="opt"><input type="radio" name="sound" value="route"><span>Sound of the route<span class="small">Road and nature sounds as filmed. A few routes have their own music.</span></span></label>
+      <label class="opt"><input type="radio" name="sound" value="off"><span>Silent</span></label>
+    </div>
   </section>
 
   <section>
     <label class="opt"><input type="checkbox" id="optFollow"><span>Video speed follows my pedalling<span class="small" id="followNote">Connect the bike to use this. The video slows down, speeds up and pauses with you.</span></span></label>
-    <label class="opt"><input type="checkbox" id="optSound"><span>Play the video's sound<span class="small">Some routes have background music, most have road and nature sounds.</span></span></label>
     <label class="opt"><input type="checkbox" id="optResume"><span>Continue long routes where I left off<span class="small">Next time you pick the same route, it starts where your last ride ended.</span></span></label>
   </section>
 
@@ -235,6 +245,7 @@ section{margin-bottom:28px}
 <!-- ================= RIDE ================= -->
 <div id="ride" hidden>
   <div id="stage"><div id="yt"></div></div>
+  <div id="musicBox" aria-hidden="true"><div id="ytm"></div></div>
   <div id="shield"></div>
 
   <div class="ridetop">
@@ -294,16 +305,16 @@ const REGIONS = [
 ];
 const ROUTES = [
   // Alps & Dolomites
-  {id:"_3gFzb2M8Xo", r:"alps", t:"South Tyrol mountain trails", min:60, ref:16},
-  {id:"veYbkfExxXE", r:"alps", t:"Alta Badia sunshine loop", min:60, ref:18},
-  {id:"HbG3xWzEPMo", r:"alps", t:"South Tyrol grand tour", min:90, ref:18},
-  {id:"3sw2_N5eqNw", r:"alps", t:"Sella Ronda", min:120, ref:18},
-  {id:"c5EVL2OS_84", r:"alps", t:"Sella Ronda, counter-clockwise", min:60, ref:18},
-  {id:"rrjV2jHwRrE", r:"alps", t:"The complete Sella Ronda", min:180, ref:18},
-  {id:"U94MF1ZF81o", r:"alps", t:"Descent from Tre Cime di Lavaredo", min:30, ref:25},
-  {id:"NhXt1xPfikI", r:"alps", t:"Nauders to Schlanders, Vinschgau", min:60, ref:25},
-  {id:"TCqvOmJBywI", r:"alps", t:"Pustertal valley", min:null, ref:20},
-  {id:"pTeZlWPvEII", r:"alps", t:"Isarco river path", min:null, ref:20},
+  {id:"_3gFzb2M8Xo", r:"alps", it:true, t:"South Tyrol mountain trails", min:60, ref:16},
+  {id:"veYbkfExxXE", r:"alps", it:true, t:"Alta Badia sunshine loop", min:60, ref:18},
+  {id:"HbG3xWzEPMo", r:"alps", it:true, t:"South Tyrol grand tour", min:90, ref:18},
+  {id:"3sw2_N5eqNw", r:"alps", it:true, t:"Sella Ronda", min:120, ref:18},
+  {id:"c5EVL2OS_84", r:"alps", it:true, t:"Sella Ronda, counter-clockwise", min:60, ref:18},
+  {id:"rrjV2jHwRrE", r:"alps", it:true, t:"The complete Sella Ronda", min:180, ref:18},
+  {id:"U94MF1ZF81o", r:"alps", it:true, t:"Descent from Tre Cime di Lavaredo", min:30, ref:25},
+  {id:"NhXt1xPfikI", r:"alps", it:true, t:"Nauders to Schlanders, Vinschgau", min:60, ref:25},
+  {id:"TCqvOmJBywI", r:"alps", it:true, t:"Pustertal valley", min:null, ref:20},
+  {id:"pTeZlWPvEII", r:"alps", it:true, t:"Isarco river path", min:null, ref:20},
   {id:"awaIJO4L5wA", r:"alps", t:"Mürren mountain village", min:30, ref:18, music:true},
   {id:"rE6PFp1GKwM", r:"alps", t:"Grimsel road to Guttannen", min:30, ref:22, music:true},
   {id:"6MSPyj3J27U", r:"alps", t:"Swiss Jura", min:null, ref:20},
@@ -367,7 +378,7 @@ const S = {
   route: store.get("route","mix"),
   dur: store.get("dur",45),
   follow: store.get("follow",true),
-  sound: store.get("sound",true),
+  sound: (v=>v===true?"music":v===false?"off":v)(store.get("sound","music")),
   resume: store.get("resume",true),
   custom: store.get("custom",[]),
   broken: new Set()
@@ -431,9 +442,12 @@ function updateStart(){
   $("startBtn").textContent = `Start ${S.dur>=60&&S.dur%60===0 ? (S.dur/60)+(S.dur===60?" hour":" hours") : S.dur+" min"} ride`;
 }
 function renderOptions(){
-  $("optFollow").checked=S.follow; $("optSound").checked=S.sound; $("optResume").checked=S.resume;
+  $("optFollow").checked=S.follow; $("optResume").checked=S.resume;
+  document.querySelectorAll('input[name="sound"]').forEach(i=>{
+    i.checked = i.value===S.sound;
+    i.onchange=()=>{ if(i.checked){ S.sound=i.value; store.set("sound",S.sound); } };
+  });
   $("optFollow").onchange=e=>{S.follow=e.target.checked; store.set("follow",S.follow);};
-  $("optSound").onchange=e=>{S.sound=e.target.checked; store.set("sound",S.sound);};
   $("optResume").onchange=e=>{S.resume=e.target.checked; store.set("resume",S.resume);};
   const sel=$("addRegion"); sel.innerHTML=REGIONS.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join("");
 }
@@ -707,6 +721,7 @@ function nextRoute(reason){
   const pos = S.resume ? (store.get("pos",{})[r.id]||0) : 0;
   const start = pos>30 ? Math.floor(pos) : 0;
   if(reason) toast(reason);
+  playMusicFor(r);
   if(!player){
     player=new YT.Player("yt",{
       videoId:r.id,
@@ -720,9 +735,39 @@ function nextRoute(reason){
   clearTimeout(R.loadTimer);
   R.loadTimer=setTimeout(()=>{ if(R.active && !R.started && !R.userPaused) setMsg("tapMsg"); }, 5000);
 }
+/* ---------- background music ---------- */
+const MUSIC = {
+  main:  ["yYvzYTYLgeg"],
+  italy: ["Lva4Ob7KBfs","iSi9Sb2qiN0","P2tv2ed5C2g","oECPnFnuBc0"]
+};
+const M = {player:null, kind:null, queue:[], cur:null, fails:0, ready:false};
+function musicKind(r){ return r && (r.r==="italy" || r.it) ? "italy" : "main"; }
+function nextTrack(){
+  if(!M.queue.length) M.queue = shuffle(MUSIC[M.kind]).filter(id=>id!==M.cur || MUSIC[M.kind].length===1);
+  M.cur = M.queue.shift(); return M.cur;
+}
+function playMusicFor(route){
+  if(S.sound!=="music") return;
+  const kind=musicKind(route);
+  if(kind===M.kind && M.player) return;           // same music family: keep the song going
+  M.kind=kind; M.queue=[]; M.fails=0;
+  const id=nextTrack();
+  if(!M.player){
+    M.player=new YT.Player("ytm",{ videoId:id,
+      playerVars:{autoplay:1, controls:0, playsinline:1, disablekb:1, fs:0, rel:0, origin:location.origin},
+      events:{
+        onReady:e=>{ M.ready=true; try{ e.target.unMute(); e.target.setVolume(75); if(!R.userPaused) e.target.playVideo(); }catch(_){} },
+        onStateChange:e=>{ if(e.data===0){ M.player.loadVideoById(nextTrack()); } if(e.data===1) M.fails=0; },
+        onError:()=>{ if(++M.fails<=MUSIC[M.kind].length) M.player.loadVideoById(nextTrack()); else toast("Your music couldn't play here. Route sound is still available in Sound."); }
+      }});
+  } else {
+    try{ M.player.loadVideoById(id); M.player.unMute(); }catch(e){}
+  }
+}
+function musicCall(fn){ try{ if(M.player && M.ready) M.player[fn](); }catch(e){} }
 function applySound(){
   if(!player || !player.mute) return;
-  try{ if(S.sound){ player.unMute(); player.setVolume(80); } else player.mute(); }catch(e){}
+  try{ if(S.sound==="route"){ player.unMute(); player.setVolume(80); } else player.mute(); }catch(e){}
 }
 function onPlayerReady(){ applySound(); try{ player.playVideo(); }catch(e){} }
 function onPlayerState(e){
@@ -826,8 +871,8 @@ function setMsg(id){
 function togglePause(){
   if(!R.active) return;
   R.userPaused=!R.userPaused;
-  if(R.userPaused){ try{player.pauseVideo();}catch(e){} setMsg("pausedMsg"); }
-  else { setMsg(R.idle?"idleMsg":null); if(!R.idle) try{player.playVideo();}catch(e){} R.lastTick=performance.now(); }
+  if(R.userPaused){ try{player.pauseVideo();}catch(e){} musicCall("pauseVideo"); setMsg("pausedMsg"); }
+  else { setMsg(R.idle?"idleMsg":null); if(!R.idle) try{player.playVideo();}catch(e){} musicCall("playVideo"); R.lastTick=performance.now(); }
   $("pauseBtn").setAttribute("aria-label", R.userPaused?"Resume":"Pause");
   $("pauseBtn").innerHTML = R.userPaused ? ICON_PLAY : ICON_PAUSE;
   showHud();
@@ -838,7 +883,7 @@ $("pauseBtn").onclick=togglePause;
 $("resumeBtn").onclick=togglePause;
 $("skipBtn").onclick=()=>{ if(R.current){ try{ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p);}catch(e){} } nextRoute(); showHud(); };
 $("endBtn").onclick=()=>finishRide(true);
-$("tapBtn").onclick=()=>{ try{ applySound(); player.playVideo(); }catch(e){} setMsg("loadMsg"); };
+$("tapBtn").onclick=()=>{ try{ applySound(); player.playVideo(); }catch(e){} musicCall("playVideo"); setMsg("loadMsg"); };
 $("shield").onclick=showHud;
 
 function showHud(){
@@ -855,6 +900,7 @@ function finishRide(early){
   clearInterval(tickTimer); clearTimeout(R.loadTimer); clearTimeout(R.hudTimer);
   try{ if(R.current && player.getCurrentTime){ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p);} }catch(e){}
   try{ player.pauseVideo(); }catch(e){}
+  musicCall("stopVideo"); M.kind=null;
   releaseWake(); leaveFullscreen();
   if(!early) chime();
   const where=R.played.length===1?R.played[0]:regionName(S.region);
@@ -917,7 +963,7 @@ if(DEMO) startDemo();
 updateBikeUI();
 if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 // test hooks
-window.__vr={S,R,sensor,DEMO_STOP,startRide,finishRide,nextRoute};
+window.__vr={S,R,M,sensor,DEMO_STOP,startRide,finishRide,nextRoute};
 </script>
 </body>
 </html>
