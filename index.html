@@ -121,8 +121,10 @@ section{margin-bottom:28px}
 .hud .left{min-width:0}
 .big{font-family:var(--display);font-weight:700;font-size:54px;line-height:.9;font-variant-numeric:tabular-nums}
 .of{font-size:13px;opacity:.85;margin-top:4px}
-.metrics{display:flex;gap:16px;flex-wrap:wrap}
-.metric{min-width:56px}
+.metrics{display:flex;gap:14px;flex-wrap:wrap}
+.metric{min-width:50px}
+.weight{display:flex;align-items:center;gap:12px;padding:10px 0}
+.weight input{width:84px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--snow);font-family:var(--display);font-size:20px;font-weight:600}
 .metric b{display:block;font-family:var(--display);font-weight:600;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
 .metric span{font-size:12px;opacity:.85}
 .progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
@@ -215,6 +217,7 @@ section{margin-bottom:28px}
 
   <section>
     <label class="opt"><input type="checkbox" id="optFollow"><span>Video speed follows my pedalling<span class="small" id="followNote">Connect the bike to use this. The video slows down, speeds up and pauses with you.</span></span></label>
+    <label class="weight"><input type="number" id="optWeight" inputmode="numeric" min="30" max="200" step="1"><span>Your weight in kg<span class="small" style="display:block">Used to estimate calories when the bike doesn't send them.</span></span></label>
     <label class="opt"><input type="checkbox" id="optResume"><span>Continue long routes where I left off<span class="small">Next time you pick the same route, it starts where your last ride ended.</span></span></label>
   </section>
 
@@ -263,7 +266,9 @@ section{margin-bottom:28px}
       <div class="metric" data-k="cadence"><b id="mCad">–</b><span>rpm</span></div>
       <div class="metric" data-k="speed"><b id="mSpd">–</b><span>km/h</span></div>
       <div class="metric" data-k="dist"><b id="mDist">0.0</b><span>km</span></div>
+      <div class="metric" data-k="kcal" hidden><b id="mKcal">0</b><span id="mKcalL">kcal</span></div>
       <div class="metric" data-k="power" hidden><b id="mPow">–</b><span>watts</span></div>
+      <div class="metric" data-k="level" hidden><b id="mLvl">–</b><span>level</span></div>
       <div class="metric" data-k="hr" hidden><b id="mHr">–</b><span>bpm</span></div>
     </div>
   </div>
@@ -380,6 +385,7 @@ const S = {
   follow: store.get("follow",true),
   sound: (v=>v===true?"music":v===false?"off":v)(store.get("sound","music")),
   resume: store.get("resume",true),
+  weight: store.get("weight",80),
   custom: store.get("custom",[]),
   broken: new Set()
 };
@@ -443,6 +449,8 @@ function updateStart(){
 }
 function renderOptions(){
   $("optFollow").checked=S.follow; $("optResume").checked=S.resume;
+  $("optWeight").value=S.weight;
+  $("optWeight").onchange=e=>{ const w=Math.round(+e.target.value); if(w>=30&&w<=200){ S.weight=w; store.set("weight",w); } else e.target.value=S.weight; };
   document.querySelectorAll('input[name="sound"]').forEach(i=>{
     i.checked = i.value===S.sound;
     i.onchange=()=>{ if(i.checked){ S.sound=i.value; store.set("sound",S.sound); } };
@@ -485,7 +493,7 @@ $("addForm").addEventListener("submit", e=>{
    Bluetooth: FTMS (Indoor Bike Data), Cycling Power, CSC
    ============================================================ */
 const UUID={FTMS:0x1826, IBD:0x2ad2, CPS:0x1818, CPM:0x2a63, CSC:0x1816, CSCM:0x2a5b, HRS:0x180d, HRM:0x2a37};
-const sensor={cadence:null, speed:null, power:null, hr:null, energy:null, at:0, connected:false, name:"", seenPower:false, seenHr:false, speedEstimated:false};
+const sensor={cadence:null, speed:null, power:null, hr:null, energy:null, resistance:null, fields:new Set(), at:0, connected:false, name:"", seenPower:false, seenHr:false, speedEstimated:false};
 let btDevice=null, reconnectTries=0, wantConnected=false;
 const prevCrank={}, prevWheel={};
 const WHEEL_M=2.096;
@@ -516,7 +524,7 @@ function parseIBD(dv){
   if(f&0x4){ if(need(2)) r.cadence=dv.getUint16(o,true)/2; o+=2; }
   if(f&0x8) o+=2;
   if(f&0x10) o+=3;
-  if(f&0x20) o+=2;
+  if(f&0x20){ if(need(2)) r.resistance=dv.getInt16(o,true); o+=2; }
   if(f&0x40){ if(need(2)) r.power=dv.getInt16(o,true); o+=2; }
   if(f&0x80) o+=2;
   if(f&0x100){ if(need(2)) r.energy=dv.getUint16(o,true); o+=5; }
@@ -546,6 +554,8 @@ function feed(r){
   if(r.power!==undefined){ sensor.power=Math.max(0,r.power); if(r.power>0) sensor.seenPower=true; }
   if(r.hr!==undefined && r.hr>0){ sensor.hr=r.hr; sensor.seenHr=true; }
   if(r.energy!==undefined) sensor.energy=r.energy;
+  if(r.resistance!==undefined) sensor.resistance=r.resistance;
+  for(const k of Object.keys(r)) if(r[k]!==undefined) sensor.fields.add(k);
   sensor.at=performance.now();
   updateBikeUI();
 }
@@ -593,7 +603,7 @@ async function setupGatt(){
       $("svcList").innerHTML+="<br>None of these is a standard bike data service. Send a screenshot of this list and it can be added.";
       toast("Connected, but the bike isn't sending standard cycling data. Open Bike details.",6000);
     } else {
-      $("svcList").innerHTML+="<br>Reading: "+used;
+      $("svcList").innerHTML+="<br>Reading: "+used+'<br><span id="svcFields">Your bike sends: waiting for data, pedal a few turns</span>';
     }
     sensor.connected=true; sensor.name=btDevice.name||"Bike"; reconnectTries=0;
     updateBikeUI();
@@ -615,7 +625,9 @@ function disconnectBike(){
   try{ btDevice && btDevice.gatt.connected && btDevice.gatt.disconnect(); }catch(e){}
   sensor.connected=false; updateBikeUI();
 }
+const FIELD_NAMES={speed:"speed",cadence:"cadence",power:"power (watts)",energy:"calories",resistance:"resistance level",hr:"heart rate"};
 function updateBikeUI(){
+  const sf=$("svcFields"); if(sf && sensor.fields.size) sf.textContent="Your bike sends: "+[...sensor.fields].map(k=>FIELD_NAMES[k]).filter(Boolean).join(", ");
   const on=sensor.connected;
   $("bikeOff").hidden = on || !btSupported();
   $("bikeNo").hidden = on || btSupported();
@@ -634,12 +646,13 @@ $("disconnectBtn").onclick=disconnectBike;
 /* demo pedalling for trying the app without the bike: add ?demo to the address */
 function startDemo(){
   sensor.connected=true; sensor.name="Demo bike"; $("svcList").textContent="Demo mode: simulated pedalling";
-  let t=0;
+  let t=0, demoKcal=0;
   setInterval(()=>{
     t+=0.5;
     const stop = DEMO_STOP.on;
     const cad = stop?0: 78+10*Math.sin(t/20);
-    feed({cadence:cad, speed:cad*0.34, power: stop?0:150+40*Math.sin(t/15), hr: 128+8*Math.sin(t/30)});
+    demoKcal += stop?0:0.5*(150/1000);
+    feed({cadence:cad, speed:cad*0.34, power: stop?0:150+40*Math.sin(t/15), hr: 128+8*Math.sin(t/30), energy: Math.floor(demoKcal), resistance: 45});
   },500);
 }
 const DEMO_STOP={on:false};
@@ -672,7 +685,7 @@ function resetRide(){
     active:false, total:S.dur*60, sec:0, km:0, cadSum:0, cadSec:0, spdSum:0, kj:0,
     queue:[], idx:-1, current:null, started:false, userPaused:false, idle:false, idleSince:0,
     lastTick:performance.now(), rate:1, rateAt:0, played:[], lastSave:0, warned5:false, warnedHalf:false,
-    loadTimer:null, energyStart:null, hudTimer:null
+    loadTimer:null, energyStart:null, bikeKcal:0, metKcal:0, powSum:0, powSec:0, lvlSum:0, lvlSec:0, topSpd:0, hudTimer:null
   });
 }
 function buildQueue(){
@@ -819,7 +832,13 @@ function tick(){
     if(live){
       R.km += (spd||0)/3600*dt;
       if(cad>0){ R.cadSum+=cad*dt; R.cadSec+=dt; R.spdSum+=(spd||0)*dt; }
-      if(sensor.seenPower) R.kj += (sensor.power||0)*dt/1000;
+      if(sensor.seenPower){ R.kj += (sensor.power||0)*dt/1000; if(cad>0){ R.powSum+=(sensor.power||0)*dt; R.powSec+=dt; } }
+      if(sensor.resistance!=null && cad>0){ R.lvlSum+=levelOf(sensor.resistance)*dt; R.lvlSec+=dt; }
+      if((spd||0)>R.topSpd) R.topSpd=spd;
+      // calories: bike's own count first, then power, then an estimate from cadence and weight
+      if(sensor.energy!=null){ if(R.energyStart==null || sensor.energy<R.energyStart) R.energyStart=sensor.energy; R.bikeKcal=sensor.energy-R.energyStart; }
+      const met = cad<5?0 : cad<60?5.5 : cad<80?7 : cad<95?8.5 : 10.5;
+      R.metKcal += met*S.weight*dt/3600;
     }
   }
 
@@ -850,6 +869,9 @@ function tick(){
   document.querySelector('[data-k="cadence"]').hidden=!live;
   document.querySelector('[data-k="speed"]').hidden=!live;
   document.querySelector('[data-k="power"]').hidden=!(live&&sensor.seenPower);
+  document.querySelector('[data-k="kcal"]').hidden=!live;
+  document.querySelector('[data-k="level"]').hidden=!(live&&sensor.resistance!=null);
+  if(live){ const k=rideKcal(); $("mKcal").textContent=Math.round(k.v); $("mKcalL").textContent=k.est?"kcal est.":"kcal"; $("mLvl").textContent=Math.round(levelOf(sensor.resistance||0)); }
   document.querySelector('[data-k="hr"]').hidden=!(live&&sensor.seenHr);
   if(live){
     $("mCad").textContent=Math.round(cad);
@@ -865,6 +887,13 @@ function tick(){
   if(left<=0) finishRide(false);
 }
 
+// some bikes report resistance x10 (e.g. 450 for level 45 of 100)
+function levelOf(v){ return v>100 ? v/10 : v; }
+function rideKcal(){
+  if(sensor.fields.has("energy") && (R.bikeKcal>0 || R.sec<120)) return {v:R.bikeKcal, est:false};
+  if(R.kj>0) return {v:R.kj, est:true};
+  return {v:R.metKcal, est:true};
+}
 function setMsg(id){
   for(const m of ["tapMsg","idleMsg","pausedMsg","loadMsg"]) $(m).hidden = m!==id;
 }
@@ -916,7 +945,10 @@ function finishRide(early){
   if(sensor.connected || R.km>0){
     stats.push([R.km.toFixed(1),"km"]);
     if(R.cadSec>0){ stats.push([Math.round(R.cadSum/R.cadSec),"average rpm"]); stats.push([(R.spdSum/R.cadSec).toFixed(1),"average km/h"]); }
-    if(R.kj>0) stats.push([Math.round(R.kj),"kcal, estimated"]);
+    const k=rideKcal(); if(k.v>0) stats.push([Math.round(k.v), k.est?"kcal, estimated":"kcal"]);
+    if(R.topSpd>0) stats.push([R.topSpd.toFixed(1),"top km/h"]);
+    if(R.powSec>0) stats.push([Math.round(R.powSum/R.powSec),"average watts"]);
+    if(R.lvlSec>0) stats.push([Math.round(R.lvlSum/R.lvlSec),"average level"]);
   }
   stats.push([String(R.played.length), R.played.length===1?"route":"routes"]);
   $("dStats").innerHTML=stats.map(s=>`<div class="stat"><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join("");
