@@ -137,6 +137,8 @@ section{margin-bottom:28px}
 .ctrls{display:flex;gap:8px}
 .ic{width:48px;height:48px;border-radius:12px;border:0;background:rgba(18,50,74,.72);color:var(--snow);display:grid;place-items:center;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .ic svg{width:22px;height:22px}
+.ic.txt{width:auto;padding:0 12px;font-family:var(--display);font-weight:600;font-size:17px}
+.center-msg .btn.ghost{background:transparent;color:var(--snow);border:1.5px solid var(--snow);margin-left:8px}
 .fade .ridetop{opacity:0;pointer-events:none}
 
 .center-msg{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(18,50,74,.85);color:var(--snow);border-radius:16px;padding:18px 22px;text-align:center;max-width:min(90vw,420px)}
@@ -254,6 +256,7 @@ section{margin-bottom:28px}
   <div class="ridetop">
     <div class="title"><b id="rTitle">…</b><span id="rRegion"></span></div>
     <div class="ctrls">
+      <button class="ic txt" id="resetBtn">Reset</button>
       <button class="ic" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button>
       <button class="ic" id="skipBtn" aria-label="Next route"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l9 7-9 7z"/><rect x="16" y="5" width="3" height="14" rx="1"/></svg></button>
       <button class="ic" id="endBtn" aria-label="End ride"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -276,6 +279,7 @@ section{margin-bottom:28px}
   <div class="center-msg" id="tapMsg" hidden><b>Ready when you are</b>Tap to start the video.<br><button class="btn" id="tapBtn">Start video</button></div>
   <div class="center-msg" id="idleMsg" hidden><b>Paused</b>Start pedalling to continue.</div>
   <div class="center-msg" id="pausedMsg" hidden><b>Paused</b><button class="btn" id="resumeBtn">Resume</button></div>
+  <div class="center-msg" id="resetMsg" hidden><b>Reset this ride?</b>You go back to the start screen to choose time, route and music again. This ride won't be saved.<br><button class="btn" id="resetYes">Reset</button><button class="btn ghost" id="resetNo">Keep riding</button></div>
   <div class="center-msg" id="loadMsg" hidden><b>Loading route</b><span id="loadText">Connecting to YouTube…</span></div>
 </div>
 
@@ -909,6 +913,21 @@ $("pauseBtn").onclick=togglePause;
 $("resumeBtn").onclick=togglePause;
 $("skipBtn").onclick=()=>{ if(R.current){ try{ const p=store.get("pos",{}); p[R.current.id]=player.getCurrentTime(); store.set("pos",p);}catch(e){} } nextRoute(); showHud(); };
 $("endBtn").onclick=()=>finishRide(true);
+$("resetBtn").onclick=()=>{ $("resetMsg").hidden=false; showHud(); };
+$("resetNo").onclick=()=>{ $("resetMsg").hidden=true; };
+$("resetYes").onclick=resetSession;
+function resetSession(){
+  $("resetMsg").hidden=true;
+  R.active=false;
+  clearInterval(tickTimer); clearTimeout(R.loadTimer); clearTimeout(R.hudTimer);
+  try{ player.pauseVideo(); }catch(e){}
+  musicCall("stopVideo"); M.kind=null;
+  setMsg(null); $("toast").hidden=true;
+  $("pauseBtn").innerHTML=ICON_PAUSE; $("pauseBtn").setAttribute("aria-label","Pause");
+  releaseWake(); leaveFullscreen();
+  showScreen("setup"); renderRegions(); renderRoutes();
+  toast("Ride reset. Choose your next ride.");
+}
 $("tapBtn").onclick=()=>{ try{ applySound(); player.playVideo(); }catch(e){} musicCall("playVideo"); setMsg("loadMsg"); };
 $("shield").onclick=showHud;
 
