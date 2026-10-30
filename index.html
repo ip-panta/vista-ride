@@ -267,7 +267,6 @@ section{margin-bottom:28px}
       <div class="metric" data-k="speed"><b id="mSpd">–</b><span>km/h</span></div>
       <div class="metric" data-k="dist"><b id="mDist">0.0</b><span>km</span></div>
       <div class="metric" data-k="kcal" hidden><b id="mKcal">0</b><span id="mKcalL">kcal</span></div>
-      <div class="metric" data-k="power" hidden><b id="mPow">–</b><span>watts</span></div>
       <div class="metric" data-k="level" hidden><b id="mLvl">–</b><span>level</span></div>
       <div class="metric" data-k="hr" hidden><b id="mHr">–</b><span>bpm</span></div>
     </div>
@@ -868,7 +867,6 @@ function tick(){
   $("prog").style.width=Math.min(100,R.sec/R.total*100)+"%";
   document.querySelector('[data-k="cadence"]').hidden=!live;
   document.querySelector('[data-k="speed"]').hidden=!live;
-  document.querySelector('[data-k="power"]').hidden=!(live&&sensor.seenPower);
   document.querySelector('[data-k="kcal"]').hidden=!live;
   document.querySelector('[data-k="level"]').hidden=!(live&&sensor.resistance!=null);
   if(live){ const k=rideKcal(); $("mKcal").textContent=Math.round(k.v); $("mKcalL").textContent=k.est?"kcal est.":"kcal"; $("mLvl").textContent=Math.round(levelOf(sensor.resistance||0)); }
@@ -876,7 +874,6 @@ function tick(){
   if(live){
     $("mCad").textContent=Math.round(cad);
     $("mSpd").textContent=(spd||0).toFixed(1);
-    $("mPow").textContent=Math.round(sensor.power||0);
     $("mHr").textContent=Math.round(sensor.hr||0);
   }
   $("mDist").textContent=live? R.km.toFixed(1) : fmt(R.sec);
@@ -947,7 +944,6 @@ function finishRide(early){
     if(R.cadSec>0){ stats.push([Math.round(R.cadSum/R.cadSec),"average rpm"]); stats.push([(R.spdSum/R.cadSec).toFixed(1),"average km/h"]); }
     const k=rideKcal(); if(k.v>0) stats.push([Math.round(k.v), k.est?"kcal, estimated":"kcal"]);
     if(R.topSpd>0) stats.push([R.topSpd.toFixed(1),"top km/h"]);
-    if(R.powSec>0) stats.push([Math.round(R.powSum/R.powSec),"average watts"]);
     if(R.lvlSec>0) stats.push([Math.round(R.lvlSum/R.lvlSec),"average level"]);
   }
   stats.push([String(R.played.length), R.played.length===1?"route":"routes"]);
