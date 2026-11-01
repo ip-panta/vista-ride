@@ -116,17 +116,17 @@ section{margin-bottom:28px}
 /* leave the bottom-right corner free so YouTube's "Skip ad" button stays tappable */
 #shield{clip-path:polygon(0 0,100% 0,100% calc(100% - 110px),calc(100% - 190px) calc(100% - 110px),calc(100% - 190px) 100%,0 100%)}
 
-.hud{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));top:calc(10px + var(--safe-t));transform:scale(.7);transform-origin:top left;display:flex;align-items:flex-end;gap:18px;padding:10px 16px 10px 14px;border-radius:14px;background:rgba(18,50,74,.72);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc((100% - 270px) / .7);transition:opacity .4s}
-@media (orientation:portrait){.hud{max-width:calc((100% - 24px) / .7);top:calc(72px + var(--safe-t));flex-wrap:wrap}}
-.hud .left{min-width:0}
-.big{font-family:var(--display);font-weight:700;font-size:54px;line-height:.9;font-variant-numeric:tabular-nums}
-.of{font-size:13px;opacity:.85;margin-top:4px}
-.metrics{display:flex;gap:14px;flex-wrap:wrap}
-.metric{min-width:50px}
+.hud{position:absolute;z-index:6;left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + var(--safe-t));display:flex;align-items:flex-end;flex-wrap:wrap;gap:6px 13px;padding:7px 11px 7px 10px;border-radius:10px;background:rgba(18,50,74,.75);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100% - 260px);transition:opacity .4s}
+@media (orientation:portrait){.hud{max-width:calc(100% - 20px);top:calc(66px + var(--safe-t))}}
+.hud .left{flex:none}
+.big{font-family:var(--display);font-weight:700;font-size:38px;line-height:.9;font-variant-numeric:tabular-nums;white-space:nowrap}
+.of{font-size:10px;opacity:.85;margin-top:3px;white-space:nowrap}
+.metrics{display:flex;gap:6px 10px;flex-wrap:wrap}
+.metric{min-width:34px;flex:none}
 .weight{display:flex;align-items:center;gap:12px;padding:10px 0}
 .weight input{width:84px;padding:9px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--snow);font-family:var(--display);font-size:20px;font-weight:600}
-.metric b{display:block;font-family:var(--display);font-weight:600;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
-.metric span{font-size:12px;opacity:.85}
+.metric b{display:block;font-family:var(--display);font-weight:600;font-size:22px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.metric span{font-size:10px;opacity:.85;white-space:nowrap}
 .progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
 .progress i{display:block;height:100%;width:0;background:var(--sun);transition:width .25s linear}
 
@@ -270,7 +270,7 @@ section{margin-bottom:28px}
       <div class="metric" data-k="cadence"><b id="mCad">–</b><span>rpm</span></div>
       <div class="metric" data-k="speed"><b id="mSpd">–</b><span>km/h</span></div>
       <div class="metric" data-k="dist"><b id="mDist">0.0</b><span>km</span></div>
-      <div class="metric" data-k="kcal" hidden><b id="mKcal">0</b><span id="mKcalL">kcal</span></div>
+      <div class="metric" data-k="kcal"><b id="mKcal">0</b><span id="mKcalL">kcal</span></div>
       <div class="metric" data-k="level" hidden><b id="mLvl">–</b><span>level</span></div>
       <div class="metric" data-k="hr" hidden><b id="mHr">–</b><span>bpm</span></div>
     </div>
@@ -870,9 +870,8 @@ function tick(){
   $("hRemain").textContent=fmt(left);
   $("hOf").textContent=`left of ${S.dur} min`;
   $("prog").style.width=Math.min(100,R.sec/R.total*100)+"%";
-  document.querySelector('[data-k="cadence"]').hidden=!live;
-  document.querySelector('[data-k="speed"]').hidden=!live;
-  document.querySelector('[data-k="kcal"]').hidden=!live;
+  // time, rpm, km/h, km and kcal are always shown; dashes until the bike sends data
+  if(!live){ $("mCad").textContent="–"; $("mSpd").textContent="–"; $("mKcal").textContent="–"; $("mKcalL").textContent="kcal"; }
   document.querySelector('[data-k="level"]').hidden=!(live&&sensor.resistance!=null);
   if(live){ const k=rideKcal(); $("mKcal").textContent=Math.round(k.v); $("mKcalL").textContent=k.est?"kcal est.":"kcal"; $("mLvl").textContent=Math.round(levelOf(sensor.resistance||0)); }
   document.querySelector('[data-k="hr"]').hidden=!(live&&sensor.seenHr);
@@ -881,8 +880,7 @@ function tick(){
     $("mSpd").textContent=(spd||0).toFixed(1);
     $("mHr").textContent=Math.round(sensor.hr||0);
   }
-  $("mDist").textContent=live? R.km.toFixed(1) : fmt(R.sec);
-  document.querySelector('[data-k="dist"] span').textContent = live ? "km" : "ridden";
+  $("mDist").textContent=live? R.km.toFixed(1) : "–";
 
   if(!R.warnedHalf && R.sec>=R.total/2 && R.total>=1800){ R.warnedHalf=true; toast("Halfway there"); }
   if(!R.warned5 && left<=300 && R.total>600){ R.warned5=true; toast("5 minutes to go"); }
