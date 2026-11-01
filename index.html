@@ -116,8 +116,8 @@ section{margin-bottom:28px}
 /* leave the bottom-right corner free so YouTube's "Skip ad" button stays tappable */
 #shield{clip-path:polygon(0 0,100% 0,100% calc(100% - 110px),calc(100% - 190px) calc(100% - 110px),calc(100% - 190px) 100%,0 100%)}
 
-.hud{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(14px + var(--safe-b));display:flex;align-items:flex-end;gap:18px;padding:10px 16px 10px 14px;border-radius:14px;background:rgba(18,50,74,.72);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100% - 230px);transition:opacity .4s}
-@media (orientation:portrait){.hud{max-width:calc(100% - 24px);right:12px;bottom:calc(130px + var(--safe-b));flex-wrap:wrap}}
+.hud{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));top:calc(10px + var(--safe-t));transform:scale(.7);transform-origin:top left;display:flex;align-items:flex-end;gap:18px;padding:10px 16px 10px 14px;border-radius:14px;background:rgba(18,50,74,.72);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc((100% - 270px) / .7);transition:opacity .4s}
+@media (orientation:portrait){.hud{max-width:calc((100% - 24px) / .7);top:calc(72px + var(--safe-t));flex-wrap:wrap}}
 .hud .left{min-width:0}
 .big{font-family:var(--display);font-weight:700;font-size:54px;line-height:.9;font-variant-numeric:tabular-nums}
 .of{font-size:13px;opacity:.85;margin-top:4px}
@@ -130,8 +130,9 @@ section{margin-bottom:28px}
 .progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
 .progress i{display:block;height:100%;width:0;background:var(--sun);transition:width .25s linear}
 
-.ridetop{position:absolute;z-index:3;top:calc(10px + var(--safe-t));left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:opacity .4s}
-.title{background:rgba(18,50,74,.72);color:var(--snow);border-radius:10px;padding:7px 12px;max-width:60%;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ridetop{position:absolute;z-index:3;top:calc(10px + var(--safe-t));right:calc(12px + env(safe-area-inset-right,0px));display:flex;justify-content:flex-end;align-items:flex-start;gap:10px;transition:opacity .4s}
+.ridebottom{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(16px + var(--safe-b));max-width:calc(100% - 230px);transition:opacity .4s}
+.title{background:rgba(18,50,74,.72);color:var(--snow);border-radius:10px;padding:7px 12px;max-width:100%;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .title b{font-family:var(--display);font-size:21px;font-weight:600;display:block;line-height:1.1}
 .title span{font-size:13px;opacity:.85}
 .ctrls{display:flex;gap:8px}
@@ -139,7 +140,7 @@ section{margin-bottom:28px}
 .ic svg{width:22px;height:22px}
 .ic.txt{width:auto;padding:0 12px;font-family:var(--display);font-weight:600;font-size:17px}
 .center-msg .btn.ghost{background:transparent;color:var(--snow);border:1.5px solid var(--snow);margin-left:8px}
-.fade .ridetop{opacity:0;pointer-events:none}
+.fade .ridetop,.fade .ridebottom{opacity:0;pointer-events:none}
 
 .center-msg{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(18,50,74,.85);color:var(--snow);border-radius:16px;padding:18px 22px;text-align:center;max-width:min(90vw,420px)}
 .center-msg b{font-family:var(--display);font-size:28px;display:block;margin-bottom:4px}
@@ -253,8 +254,8 @@ section{margin-bottom:28px}
   <div id="musicBox" aria-hidden="true"><div id="ytm"></div></div>
   <div id="shield"></div>
 
+  <div class="ridebottom"><div class="title"><b id="rTitle">…</b><span id="rRegion"></span></div></div>
   <div class="ridetop">
-    <div class="title"><b id="rTitle">…</b><span id="rRegion"></span></div>
     <div class="ctrls">
       <button class="ic txt" id="resetBtn">Reset</button>
       <button class="ic" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button>
