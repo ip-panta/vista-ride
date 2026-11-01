@@ -117,8 +117,8 @@ section{margin-bottom:28px}
 #shield{clip-path:polygon(0 0,100% 0,100% calc(100% - 110px),calc(100% - 190px) calc(100% - 110px),calc(100% - 190px) 100%,0 100%)}
 
 .hud{position:absolute;z-index:6;left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + var(--safe-t));display:flex;align-items:flex-end;flex-wrap:wrap;gap:6px 13px;padding:7px 11px 7px 10px;border-radius:10px;background:rgba(18,50,74,.75);color:var(--snow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100% - 260px);transition:opacity .4s}
-@media (orientation:portrait){.hud{max-width:calc(100% - 20px);top:calc(66px + var(--safe-t))}}
-.hud .left{flex:none}
+@media (orientation:portrait){.hud{max-width:calc(100% - 20px);top:calc(144px + var(--safe-t))}}
+.timebox{position:absolute;z-index:6;top:calc(10px + var(--safe-t));right:calc(10px + env(safe-area-inset-right,0px));padding:7px 11px;border-radius:10px;background:rgba(18,50,74,.75);color:var(--snow);text-align:right;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .big{font-family:var(--display);font-weight:700;font-size:38px;line-height:.9;font-variant-numeric:tabular-nums;white-space:nowrap}
 .of{font-size:10px;opacity:.85;margin-top:3px;white-space:nowrap}
 .metrics{display:flex;gap:6px 10px;flex-wrap:wrap}
@@ -130,7 +130,7 @@ section{margin-bottom:28px}
 .progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.18)}
 .progress i{display:block;height:100%;width:0;background:var(--sun);transition:width .25s linear}
 
-.ridetop{position:absolute;z-index:3;top:calc(10px + var(--safe-t));right:calc(12px + env(safe-area-inset-right,0px));display:flex;justify-content:flex-end;align-items:flex-start;gap:10px;transition:opacity .4s}
+.ridetop{position:absolute;z-index:3;top:calc(84px + var(--safe-t));right:calc(12px + env(safe-area-inset-right,0px));display:flex;justify-content:flex-end;align-items:flex-start;gap:10px;transition:opacity .4s}
 .ridebottom{position:absolute;z-index:3;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(16px + var(--safe-b));max-width:calc(100% - 230px);transition:opacity .4s}
 .title{background:rgba(18,50,74,.72);color:var(--snow);border-radius:10px;padding:7px 12px;max-width:100%;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .title b{font-family:var(--display);font-size:21px;font-weight:600;display:block;line-height:1.1}
@@ -264,8 +264,8 @@ section{margin-bottom:28px}
     </div>
   </div>
 
+  <div class="timebox" id="timeBox"><div class="big" id="hRemain">60:00</div><div class="of" id="hOf">left of 60 min</div></div>
   <div class="hud" id="hud">
-    <div class="left"><div class="big" id="hRemain">60:00</div><div class="of" id="hOf">left of 60 min</div></div>
     <div class="metrics" id="hMetrics">
       <div class="metric" data-k="cadence"><b id="mCad">–</b><span>rpm</span></div>
       <div class="metric" data-k="speed"><b id="mSpd">–</b><span>km/h</span></div>
